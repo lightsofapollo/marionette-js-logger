@@ -4,6 +4,29 @@ Proxies console.* calls made in b2g-desktop or firefox directly to your
 node host. Uses a websocket and the observer api (in firefox/b2g) to
 give you reliable console.log notices without overriding the global.
 
+## Usage
+
+```js
+// client is assumed to be a Marionette.Client instance
+
+var logger = require('marionette-js-logger');
+var server;
+
+logger.setup(driver, function(err, _server) {
+  // server needs to be closed at some point (server.close());
+  server = _server;
+  
+  // yey now console.log will be proxied to the node process!
+  // you can optionally override the console.log behaviour
+  server.handleMessage = function(event) {
+    event.message; // raw string of message
+    event.fileName; // name where it was called
+    event.lineNumber; // line number of call
+  };
+});
+
+```
+
 ## LICENSE
 
 Copyright (c) 2013 Mozilla Foundation
