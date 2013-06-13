@@ -1,0 +1,31 @@
+{
+  "name": "marionette-js-logger",
+  "version": "0.0.1",
+  "author": "James Lal [:lightsofapollo]",
+  "description": "Realtime host -> desktop logging",
+  "main": "index.js",
+  "keywords": [
+    "firefox os",
+    "gecko",
+    "b2g-desktop",
+    "firefox"
+  ],
+  "dependencies" : {
+    "ws": "~0.4.25",
+    "empty-port": "~0.0.1",
+    "debug": "*"
+  },
+  "devDependencies": {
+    "mocha": "~1.7",
+    "marionette-client": "~0.5.5",
+    "marionette-host-environment": "~0.0.1"
+  },
+  "license": "MIT",
+  "engine": {
+    "node": ">=0.4"
+  },
+
+  "scripts": {
+    "test": "make test-node"
+  }
+}
