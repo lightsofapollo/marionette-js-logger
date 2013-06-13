@@ -51,7 +51,7 @@ suite('client', function() {
   // setup plugin
   var server;
   setup(function(done) {
-    subject.setup(device, {}, function(err, _server) {
+    subject.setup(device, function(err, _server) {
       server = _server;
       done();
     });

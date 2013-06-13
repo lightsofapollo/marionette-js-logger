@@ -2,6 +2,11 @@ var client = require('./lib/client').client;
 var Server = require('./lib/server').Server;
 
 function setup(device, options, callback) {
+  if (typeof options === 'function') {
+    callback = options;
+    options = {};
+  }
+
   var server = new Server();
 
   function handleSetup(err) {
