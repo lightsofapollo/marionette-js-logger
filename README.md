@@ -1,5 +1,8 @@
 # Marionette JS Console plugin
 
+[![Build
+Status](https://travis-ci.org/lightsofapollo/marionette-js-logger.png)](https://travis-ci.org/lightsofapollo/marionette-js-logger)
+
 Proxies console.* calls made in b2g-desktop or firefox directly to your
 node host. Uses a websocket and the observer api (in firefox/b2g) to
 give you reliable console.log notices without overriding the global.
