@@ -4,6 +4,7 @@ suite('client', function() {
   var host = require('marionette-host-environment');
   var Server = require('../lib/server').Server;
   var subject = require('../lib/client');
+  var assert = require('assert');
 
   // setup server
   var server;
@@ -24,7 +25,6 @@ suite('client', function() {
     host.spawn(__dirname + '/b2g/', function(err, port, child) {
       if (err) return callback(err);
       b2gProcess = child;
-      child.stdout.pipe(process.stdout);
       var driver = new Marionette.Drivers.Tcp({ port: port });
       driver.connect(function() {
         device = new Marionette.Client(driver, {
@@ -48,11 +48,12 @@ suite('client', function() {
     });
 
     test('console', function(done) {
-      server.handleMessage = function() {
+      server.handleMessage = function(msg) {
+        assert.ok(msg.message.indexOf('foobar') !== -1, 'has foobar');
         done();
       };
       device.executeScript(function() {
-        console.log('foobar!');
+        console.log('foobar!', { 'muy thing': true });
       });
     });
   });

@@ -57,8 +57,7 @@ suite('server', function() {
       };
 
       client.send(JSON.stringify({
-        message: sentMessage,
-        stack: (new Error().stack)
+        message: sentMessage
       }));
     });
   });
