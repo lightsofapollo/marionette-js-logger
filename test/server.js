@@ -22,6 +22,10 @@ suite('server', function() {
     assert.ok(subject.ws, 'has ws server');
   });
 
+  test('.port', function() {
+    assert.ok(subject.port, 'has port');
+  });
+
   teardown(function() {
     subject.close();
   });
