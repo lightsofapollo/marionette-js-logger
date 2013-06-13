@@ -2,19 +2,32 @@ suite('client', function() {
   // setup marionette and launch a client
   var Marionette = require('marionette-client');
   var host = require('marionette-host-environment');
-  var Server = require('../lib/server').Server;
-  var subject = require('../lib/client');
+  var subject = require('../index');
   var assert = require('assert');
+  var static = require('node-static');
 
-  // setup server
-  var server;
-  setup(function(done) {
-    server = new Server();
-    server.listen(done);
+
+  // setup http static file server
+  var http = require('http');
+  var httpServer;
+  var httpPort = 60044;
+
+  // generate a local url
+  function localUrl(path) {
+    return 'http://localhost:' + httpPort + '/' + path;
+  }
+
+  setup(function() {
+    var file = new static.Server(__dirname + '/public');
+    httpServer = http.createServer(function(req, res) {
+      req.on('end', function() {
+        file.serve(req, res);
+      }).resume();
+    }).listen(httpPort);
   });
 
   teardown(function() {
-    server.close();
+    httpServer.close();
   });
 
   // setup device
@@ -35,27 +48,41 @@ suite('client', function() {
     });
   });
 
+  // setup plugin
+  var server;
+  setup(function(done) {
+    subject.setup(device, {}, function(err, _server) {
+      server = _server;
+      done();
+    });
+  });
+
   teardown(function(done) {
+    server.close();
     device.deleteSession(function() {
       b2gProcess.kill();
       done();
     });
   });
 
-  suite('logging via device', function() {
-    setup(function(done) {
-      subject.setup(device, { port: server.port }, done);
-    });
-
-    test('console', function(done) {
-      server.handleMessage = function(msg) {
-        assert.ok(msg.message.indexOf('foobar') !== -1, 'has foobar');
-        done();
-      };
-      device.executeScript(function() {
-        console.log('foobar!', { 'muy thing': true });
-      });
+  test('console', function(done) {
+    server.handleMessage = function(msg) {
+      assert.ok(msg.message.indexOf('foobar') !== -1, 'has foobar');
+      done();
+    };
+    device.executeScript(function() {
+      console.log('foobar!', { 'muy thing': true });
     });
   });
 
+  test('going to a different url and logging', function(done) {
+    var unique = '____I_AM_SO_UNIQUE___';
+    server.handleMessage = function(msg) {
+      if (msg.message.indexOf(unique) !== -1)
+        return done();
+    };
+
+    device.goUrl(localUrl('blank.html'));
+    device.goUrl(localUrl('index.html'));
+  });
 });
