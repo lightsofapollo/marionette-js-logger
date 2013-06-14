@@ -40,9 +40,7 @@ suite('client', function() {
       b2gProcess = child;
       var driver = new Marionette.Drivers.Tcp({ port: port });
       driver.connect(function() {
-        device = new Marionette.Client(driver, {
-          defaultCallback: function() {}
-        });
+        device = new Marionette.Client(driver);
         device.startSession(done);
       });
     });
@@ -72,7 +70,7 @@ suite('client', function() {
     };
     device.executeScript(function() {
       console.log('foobar!', { 'muy thing': true });
-    });
+    }, function() {});
   });
 
   test('going to a different url and logging', function(done) {
@@ -82,7 +80,7 @@ suite('client', function() {
         return done();
     };
 
-    device.goUrl(localUrl('blank.html'));
-    device.goUrl(localUrl('index.html'));
+    device.goUrl(localUrl('blank.html'), function() {});
+    device.goUrl(localUrl('index.html'), function() {});
   });
 });
