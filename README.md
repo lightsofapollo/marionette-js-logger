@@ -15,7 +15,7 @@ give you reliable console.log notices without overriding the global.
 var logger = require('marionette-js-logger');
 var server;
 
-logger.setup(driver, function(err, _server) {
+logger.setup(client, function(err, _server) {
   // server needs to be closed at some point (server.close());
   server = _server;
   
