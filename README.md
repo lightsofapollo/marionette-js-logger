@@ -27,7 +27,7 @@ logger.setup(client, function(err, _server) {
     event.lineNumber; // line number of call
   };
   
-  driver.executeScript(function() {
+  client.executeScript(function() {
     // this works too but more importantly all other console.log's in content work too
     console.log(document.location.href);
   });
