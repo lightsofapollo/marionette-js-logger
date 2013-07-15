@@ -16,9 +16,9 @@
     "debug": "*"
   },
   "devDependencies": {
-    "mocha": "~1.7",
-    "marionette-client": "~0.5.5",
-    "marionette-host-environment": "~0.0.2",
+    "mocha": "~1.12",
+    "marionette-client": "~0.9.0",
+    "marionette-host-environment": "~0.3.0",
     "node-static": "~0.6.9"
   },
   "license": "MIT",

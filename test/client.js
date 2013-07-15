@@ -41,22 +41,13 @@ suite('client', function() {
       var driver = new Marionette.Drivers.Tcp({ port: port });
       driver.connect(function() {
         device = new Marionette.Client(driver);
+        server = subject.setup(device);
         device.startSession(done);
       });
     });
   });
 
-  // setup plugin
-  var server;
-  setup(function(done) {
-    subject.setup(device, function(err, _server) {
-      server = _server;
-      done();
-    });
-  });
-
   teardown(function(done) {
-    server.close();
     device.deleteSession(function() {
       b2gProcess.kill();
       done();

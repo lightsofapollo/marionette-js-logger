@@ -10,15 +10,14 @@ give you reliable console.log notices without overriding the global.
 ## Usage
 
 ```js
-// client is assumed to be a Marionette.Client instance
 
-var logger = require('marionette-js-logger');
-var server;
+// create the plugin. This must run before startSession.
+client.plugin('logger', require('marionette-js-logger'));
 
-logger.setup(client, function(err, _server) {
+client.startSession(function() {
   // server needs to be closed at some point (server.close());
-  server = _server;
-  
+  server = client.logger;
+
   // yey now console.log will be proxied to the node process!
   // you can optionally override the console.log behaviour
   server.handleMessage = function(event) {
@@ -26,13 +25,14 @@ logger.setup(client, function(err, _server) {
     event.fileName; // name where it was called
     event.lineNumber; // line number of call
   };
-  
+
   client.executeScript(function() {
     // this works too but more importantly all other console.log's in content work too
     console.log(document.location.href);
   });
-});
 
+  client.deleteSession();
+});
 ```
 
 ## LICENSE
