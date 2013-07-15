@@ -1,11 +1,11 @@
 default: test
 
 test/b2g:
-	node setup.js
+	./node_modules/marionette-host-environment/bin/marionette-host-environment $@
 
 .PHONY: test
 test: test/b2g
-	./node_modules/mocha/bin/mocha --ui tdd
+	./node_modules/.bin/mocha
 
 .PHONY: ci
 ci:
