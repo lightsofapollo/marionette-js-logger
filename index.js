@@ -22,10 +22,6 @@ function setup(client, options) {
     }
   });
 
-  client.addHook('deleteSession', function(done) {
-    done();
-  });
-
   return server;
 }
 
