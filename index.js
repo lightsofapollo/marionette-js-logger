@@ -23,7 +23,6 @@ function setup(client, options) {
   });
 
   client.addHook('deleteSession', function(done) {
-    server.close();
     done();
   });
 
