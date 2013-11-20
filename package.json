@@ -10,22 +10,23 @@
     "b2g-desktop",
     "firefox"
   ],
-  "dependencies" : {
-    "ws": "~0.4.25",
+  "dependencies": {
     "empty-port": "~0.0.1",
-    "debug": "*"
+    "debug": "*",
+    "websocket": "~1.0.7"
   },
   "devDependencies": {
     "mocha": "~1.12",
-    "marionette-client": "~0.9.0",
-    "marionette-host-environment": "~0.3.0",
-    "node-static": "~0.6.9"
+    "marionette-client": "~1.0.0",
+    "marionette-js-runner": "~0.4.0",
+    "node-static": "~0.6.9",
+    "ws": "~0.4.31",
+    "marionette-host-environment": "~0.4.0"
   },
   "license": "MIT",
   "engine": {
     "node": ">=0.4"
   },
-
   "scripts": {
     "test": "make test-node"
   }

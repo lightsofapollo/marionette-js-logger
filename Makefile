@@ -1,11 +1,14 @@
 default: test
 
-test/b2g:
+node_modules: package.json
+	npm install
+
+b2g: package.json
 	./node_modules/marionette-host-environment/bin/marionette-host-environment $@
 
 .PHONY: test
-test: test/b2g
-	./node_modules/.bin/mocha
+test: b2g
+	./node_modules/.bin/marionette-mocha $(wildcard test/*.js)
 
 .PHONY: ci
 ci:
