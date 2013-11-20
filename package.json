@@ -11,9 +11,9 @@
     "firefox"
   ],
   "dependencies" : {
-    "ws": "~0.4.25",
     "empty-port": "~0.0.1",
-    "debug": "*"
+    "debug": "*",
+    "websocket": "~1.0.7"
   },
   "devDependencies": {
     "mocha": "~1.12",
