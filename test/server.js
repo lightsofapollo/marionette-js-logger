@@ -18,10 +18,6 @@ suite('server', function() {
     });
   });
 
-  test('.ws', function() {
-    assert.ok(subject.ws, 'has ws server');
-  });
-
   test('.port', function() {
     assert.ok(subject.port, 'has port');
   });

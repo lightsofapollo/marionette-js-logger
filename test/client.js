@@ -1,11 +1,17 @@
 suite('client', function() {
   // setup marionette and launch a client
   var Marionette = require('marionette-client');
-  var host = require('marionette-host-environment');
-  var subject = require('../index');
   var assert = require('assert');
   var static = require('node-static');
 
+  // install the plugin
+  marionette.plugin('logger', require('../'), {
+    autoClose: true,
+    port: 60150
+  });
+
+  // we need to use the async client
+  var client = marionette.client(null, Marionette.Drivers.Tcp);
 
   // setup http static file server
   var http = require('http');
@@ -30,48 +36,23 @@ suite('client', function() {
     httpServer.close();
   });
 
-  // setup device
-  var b2gProcess;
-  var device;
-  setup(function(done) {
-    this.timeout('50s');
-    host.spawn(__dirname + '/b2g/', function(err, port, child) {
-      if (err) return callback(err);
-      b2gProcess = child;
-      var driver = new Marionette.Drivers.Tcp({ port: port });
-      driver.connect(function() {
-        device = new Marionette.Client(driver);
-        server = subject.setup(device);
-        device.startSession(done);
-      });
-    });
-  });
-
-  teardown(function(done) {
-    device.deleteSession(function() {
-      b2gProcess.kill();
-      done();
-    });
-  });
-
   test('console', function(done) {
-    server.handleMessage = function(msg) {
-      assert.ok(msg.message.indexOf('foobar') !== -1, 'has foobar');
-      done();
+    client.logger.handleMessage = function(msg) {
+      if (msg.message.indexOf('foobar!') !== -1) done();
     };
-    device.executeScript(function() {
+    client.executeScript(function() {
       console.log('foobar!', { 'muy thing': true });
     }, function() {});
   });
 
   test('going to a different url and logging', function(done) {
     var unique = '____I_AM_SO_UNIQUE___';
-    server.handleMessage = function(msg) {
+    client.logger.handleMessage = function(msg) {
       if (msg.message.indexOf(unique) !== -1)
         return done();
     };
 
-    device.goUrl(localUrl('blank.html'), function() {});
-    device.goUrl(localUrl('index.html'), function() {});
+    client.goUrl(localUrl('blank.html'), function() {});
+    client.goUrl(localUrl('index.html'), function() {});
   });
 });
