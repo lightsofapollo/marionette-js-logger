@@ -23,7 +23,7 @@ function setup(client, options) {
   });
 
   // XXX: major hack around the fact we can't get this working sync
-  if (options.autoClose) {
+  if (options && options.autoClose) {
     client.addHook('deleteSession', server.close.bind(server));
   }
 

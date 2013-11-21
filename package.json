@@ -1,6 +1,6 @@
 {
   "name": "marionette-js-logger",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "author": "James Lal [:lightsofapollo]",
   "description": "Realtime host -> desktop logging",
   "main": "index.js",
