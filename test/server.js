@@ -58,16 +58,30 @@ suite('server', function() {
     });
   });
 
-  test('custom logger', function(done) {
+  test('custom loggers', function(done) {
     var sentMessage = {
       message: JSON.stringify({ yey: true }),
       stack: (new Error().stack)
     };
 
+    var gotHandleMessage = false;
+    var gotFirstListener = false;
+
     subject.handleMessage = function(msg) {
       assert.deepEqual(msg, sentMessage);
-      done();
+      gotHandleMessage = true;
     };
+    subject.on('message', function first(msg) {
+      assert(gotHandleMessage, 'handleMessage already called');
+      assert.deepEqual(msg, sentMessage);
+      gotFirstListener = true;
+    });
+    subject.on('message', function second(msg) {
+      assert(gotHandleMessage, 'handleMessage already called');
+      assert(gotFirstListener, 'first listener already called');
+      assert.deepEqual(msg, sentMessage);
+      done();
+    });
 
     client.send(JSON.stringify(sentMessage));
   });
