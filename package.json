@@ -1,6 +1,6 @@
 {
   "name": "marionette-js-logger",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "author": "James Lal [:lightsofapollo]",
   "description": "Realtime host -> desktop logging",
   "main": "index.js",
@@ -11,16 +11,16 @@
     "firefox"
   ],
   "dependencies": {
-    "empty-port": "~0.0.1",
     "debug": "*",
-    "websocket": "~1.0.7"
+    "empty-port": "~0.0.1"
   },
   "devDependencies": {
     "mocha": "~1.15.0",
     "marionette-client": "~1.1.0",
+    "marionette-helper": "~0.3.1",
     "marionette-js-runner": "~0.4.3",
+    "marionette-apps": "~0.3.3",
     "node-static": "~0.6.9",
-    "ws": "~0.4.31",
     "marionette-b2gdesktop-host": "~0.7.1",
     "mozilla-download": "~0.4"
   },
@@ -29,6 +29,6 @@
     "node": ">=0.4"
   },
   "scripts": {
-    "test": "make test-node"
+    "test": "make test"
   }
 }
