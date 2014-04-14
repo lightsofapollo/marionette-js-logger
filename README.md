@@ -51,7 +51,7 @@ client.startSession(function() {
   // that returns true, 'message' events will be emitted for ALL retrieved logs.
   // Also, subsequent calls to waitForLogMessage will only call the function
   // for newly retrieved logs.
-  logGrabber.waitForLogMessage(timeoutMS, function checksEveryNewMessage(msg) {
+  logGrabber.waitForLogMessage(function checksEveryNewMessage(msg) {
     return /my car keys/.test(msg.message);
   });
 

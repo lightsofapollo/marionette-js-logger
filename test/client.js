@@ -7,6 +7,7 @@ suite('client', function() {
   // install the plugin
   marionette.plugin('logger', require('../'));
   marionette.plugin('apps', require('marionette-apps'));
+  marionette.plugin('helper', require('marionette-helper'));
 
   // we need to use the async client
   var client = marionette.client({
@@ -38,16 +39,6 @@ suite('client', function() {
     server.stop();
   });
 
-  function sleep(millis) {
-    // from marionette-helper
-    var scope = client.scope({
-      scriptTimeout: millis + 1000
-    });
-    scope.executeAsyncScript(function(millis) {
-      setTimeout(marionetteScriptFinished, millis);
-    }, [millis]);
-  }
-
   test('console', function() {
     var gotMessage = false;
 
@@ -63,7 +54,7 @@ suite('client', function() {
     // be logged.
     client.executeScript(function() {
       console.log('foobar!', { 'muy thing': true });
-    }, function() {});
+    });
     client.logger.waitForLogMessage(function(msg) {
       return (msg.message.indexOf('foobar!') !== -1);
     });
@@ -81,10 +72,10 @@ suite('client', function() {
     // log it again...
     client.executeScript(function() {
       console.log('foobar!', { 'moo thing': true });
-    }, function() {});
+    });
     // and wait long enough for the Firefox 15ms batching to have definitely
     // expired.
-    sleep(30);
+    client.helper.wait(30);
     client.logger.grabLogMessages();
     assert(gotMessage);
   });

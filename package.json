@@ -17,6 +17,7 @@
   "devDependencies": {
     "mocha": "~1.15.0",
     "marionette-client": "~1.1.0",
+    "marionette-helper": "~0.3.1",
     "marionette-js-runner": "~0.4.3",
     "marionette-apps": "~0.3.3",
     "node-static": "~0.6.9",
