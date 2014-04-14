@@ -78,6 +78,52 @@ suite('client', function() {
     client.helper.wait(30);
     client.logger.grabLogMessages();
     assert(gotMessage);
+
+    // - Now check our timeout mechanism without us logging anything
+    // (Note that other things may cause logging to happen, so this may end up
+    // doing what our next case tries to do too.)
+
+    // Disable the default onScriptTimeout which likes to take a screenshot
+    // and spams stdout.
+    client.onScriptTimeout = null;
+
+    var clockStartedAt = Date.now();
+    assert.throws(function() {
+      client.logger.waitForLogMessage(function() {
+        // never match anything!
+        return false;
+      }, 100);
+    }, Error);
+    var clockStoppedAt = Date.now();
+    assert(clockStoppedAt > clockStartedAt + 95, 'correct duration');
+    assert(clockStoppedAt < clockStartedAt + 1000, 'reasonably bounded');
+
+    // - Check our timeout with us logging a few things
+    clockStartedAt = Date.now();
+    assert.throws(function() {
+      client.executeScript(function() {
+        console.log('0ms');
+        window.setTimeout(function() {
+          console.log('20ms');
+        }, 20);
+        window.setTimeout(function() {
+          console.log('40ms');
+        }, 40);
+        window.setTimeout(function() {
+          console.log('60ms');
+        }, 60);
+        window.setTimeout(function() {
+          console.log('80ms');
+        }, 80);
+      });
+      client.logger.waitForLogMessage(function() {
+        // never match anything!
+        return false;
+      }, 100);
+    }, Error);
+    clockStoppedAt = Date.now();
+    assert(clockStoppedAt > clockStartedAt + 95, 'correct duration');
+    assert(clockStoppedAt < clockStartedAt + 1000, 'reasonably bounded');
   });
 
   test('get logs from (nested) mozbrowser iframes', function() {
