@@ -15,6 +15,10 @@ function setup(client, options) {
 
   var grabber = new LogGrabber(client, options.logLimit || DEFAULT_LOG_LIMIT);
 
+  // Note!  marionette-js-runner's createHost method uses resetWithDriver every
+  // time it goes to instantiate us.  As a byproduct of this call, all hooks are
+  // reset, and this is why we don't need to worry about these addHook calls
+  // redundantly stacking up.
   client.addHook('startSession', function(done) {
     grabber._connect(done);
   });
