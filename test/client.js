@@ -46,10 +46,18 @@ suite('client', function() {
   });
 
   test('going to a different url and logging', function(done) {
-    var unique = '____I_AM_SO_UNIQUE___';
+    var msgNo = 0;
     client.logger.handleMessage = function(msg) {
-      if (msg.message.indexOf(unique) !== -1)
+      msgNo++;
+      if (msgNo === 1) {
+        assert.equal(msg.message, '____I_AM_SO_UNIQUE___');
+        assert.equal(msg.level, 'log');
+      } else if (msgNo === 2) {
+        assert.equal(msg.message, '___I_AM_SO_BROKEN___');
+        assert.equal(msg.level, 'error');
+        assert.equal(msg.stack.length, 1);
         return done();
+      }
     };
 
     client.goUrl(localUrl('blank.html'), function() {});
