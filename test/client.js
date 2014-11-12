@@ -1,15 +1,17 @@
-suite('client', function() {
-  // setup marionette and launch a client
-  var Marionette = require('marionette-client');
-  var assert = require('assert');
-  var Server = require('./server_helper/server');
+var Marionette = require('marionette-client');
+var Rocketbar = require('./rocketbar');
+var Search = require('./search');
+var Server = require('./server_helper/server');
+var System = require('./system');
+var assert = require('assert');
 
-  // install the plugin
+suite('client', function() {
+  var rocketbar, search, server, system;
+
   marionette.plugin('logger', require('../'));
   marionette.plugin('apps', require('marionette-apps'));
   marionette.plugin('helper', require('marionette-helper'));
 
-  // we need to use the async client
   var client = marionette.client({
     settings: {
       'ftu.manifestURL': '',
@@ -19,20 +21,26 @@ suite('client', function() {
     }
   });
 
-  var BROWSER_APP = 'app://browser.gaiamobile.org';
-  function browserShow(url) {
-    var searchBar = client.findElement('#url-input');
-    var searchButton = client.findElement('#url-button');
-    searchBar.sendKeys(url);
-    searchButton.click();
+  /**
+   * Generate a local url
+   */
+  function localUrl(path) {
+    return 'http://localhost:' + server.port + '/' + path;
   }
 
-  var server;
   suiteSetup(function(done) {
    Server.create(function(err, _server) {
       server = _server;
       done();
     });
+  });
+
+  setup(function() {
+    rocketbar = new Rocketbar(client);
+    search = new Search(client);
+    search.removeGeolocationPermission();
+    system = new System(client);
+    system.waitForStartup();
   });
 
   suiteTeardown(function() {
@@ -96,7 +104,6 @@ suite('client', function() {
     }, Error);
     var clockStoppedAt = Date.now();
     assert(clockStoppedAt > clockStartedAt + 95, 'correct duration');
-    assert(clockStoppedAt < clockStartedAt + 1000, 'reasonably bounded');
 
     // - Check our timeout with us logging a few things
     clockStartedAt = Date.now();
@@ -123,31 +130,10 @@ suite('client', function() {
     }, Error);
     clockStoppedAt = Date.now();
     assert(clockStoppedAt > clockStartedAt + 95, 'correct duration');
-    assert(clockStoppedAt < clockStartedAt + 1000, 'reasonably bounded');
-  });
-
-  test('going to a different url and logging', function(done) {
-    var msgNo = 0;
-    client.logger.on('message', function(msg) {
-
-      if (msgNo === 0 &&
-          msg.message === '____I_AM_SO_UNIQUE___' &&
-          msg.level === 'log') {
-        assert.ok(true, 'Got console.log');
-        msgNo++;
-      } else if (msgNo === 1 &&
-                 msg.message === '___I_AM_SO_BROKEN___' &&
-                 msg.level === 'error' &&
-                 msg.stack.length) {
-        assert.ok(true, 'Got console.error');
-        done();
-      }
-    });
   });
 
   test('get logs from (nested) mozbrowser iframes', function() {
     var unique = '____I_AM_SO_UNIQUE___';
-
     var gotEmitted = false;
 
     // this gets emitted before our waitForLogMessage gets a chance
@@ -157,26 +143,34 @@ suite('client', function() {
       }
     });
 
-    client.apps.launch(BROWSER_APP);
-    client.apps.switchToApp(BROWSER_APP);
-    browserShow(server.url('index.html'));
+    // Launch browser and navigate to index.html.
+    rocketbar.homescreenFocus();
+    rocketbar.enterText(localUrl('index.html') + '\uE006');
 
     client.logger.waitForLogMessage(function(msg) {
-      return (msg.message.indexOf(unique) !== -1);
+      return msg.message.indexOf(unique) !== -1;
     });
     assert(gotEmitted);
   });
 
-  test('Catches content errors', function(done) {
+  test('Catches content errors', function() {
+    var gotEmitted = false;
 
+    // this gets emitted before our waitForLogMessage gets a chance
     client.logger.on('message', function(msg) {
       if (msg.message.indexOf('SyntaxError') !== -1 &&
           msg.filename.indexOf('error.html') !== -1) {
-        assert.ok(true, 'We got the syntax error');
-        done();
+        gotEmitted = true;
       }
     });
 
-    client.goUrl(localUrl('error.html'), function() {});
+    // Launch browser and navigate to error.html.
+    rocketbar.homescreenFocus();
+    rocketbar.enterText(localUrl('error.html') + '\uE006');
+
+    client.logger.waitForLogMessage(function(msg) {
+      return msg.message.indexOf('SyntaxError') !== -1;
+    });
+    assert(gotEmitted);
   });
 });
