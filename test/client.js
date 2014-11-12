@@ -1,82 +1,176 @@
-suite('client', function() {
-  // setup marionette and launch a client
-  var Marionette = require('marionette-client');
-  var assert = require('assert');
-  var static = require('node-static');
+var Marionette = require('marionette-client');
+var Rocketbar = require('./rocketbar');
+var Search = require('./search');
+var Server = require('./server_helper/server');
+var System = require('./system');
+var assert = require('assert');
 
-  // install the plugin
-  marionette.plugin('logger', require('../'), {
-    autoClose: true,
-    port: 60150
+suite('client', function() {
+  var rocketbar, search, server, system;
+
+  marionette.plugin('logger', require('../'));
+  marionette.plugin('apps', require('marionette-apps'));
+  marionette.plugin('helper', require('marionette-helper'));
+
+  var client = marionette.client({
+    settings: {
+      'ftu.manifestURL': '',
+      'screen.timeout': 0,
+      'lockscreen.enabled': false,
+      'lockscreen.locked': false
+    }
   });
 
-  // we need to use the async client
-  var client = marionette.client(null, Marionette.Drivers.Tcp);
-
-  // setup http static file server
-  var http = require('http');
-  var httpServer;
-  var httpPort = 60044;
-
-  // generate a local url
+  /**
+   * Generate a local url
+   */
   function localUrl(path) {
-    return 'http://localhost:' + httpPort + '/' + path;
+    return 'http://localhost:' + server.port + '/' + path;
   }
 
+  suiteSetup(function(done) {
+   Server.create(function(err, _server) {
+      server = _server;
+      done();
+    });
+  });
+
   setup(function() {
-    var file = new static.Server(__dirname + '/public');
-    httpServer = http.createServer(function(req, res) {
-      req.on('end', function() {
-        file.serve(req, res);
-      }).resume();
-    }).listen(httpPort);
+    rocketbar = new Rocketbar(client);
+    search = new Search(client);
+    search.removeGeolocationPermission();
+    system = new System(client);
+    system.waitForStartup();
   });
 
-  teardown(function() {
-    httpServer.close();
+  suiteTeardown(function() {
+    server.stop();
   });
 
-  test('console', function(done) {
-    client.logger.handleMessage = function(msg) {
-      if (msg.message.indexOf('foobar!') !== -1) done();
-    };
+  test('console', function() {
+    var gotMessage = false;
+
+    // - Check that waitForLogMessage works against our same chrome context
+    // This also exercises grabAtLeastOneNewMessage
+    client.logger.on('message', function(msg) {
+      if (msg.message.indexOf('foobar!') !== -1) {
+        gotMessage = true;
+      }
+    });
+
+    // NOTE!  There is up to a 15ms delay before this log message will actually
+    // be logged.
     client.executeScript(function() {
       console.log('foobar!', { 'muy thing': true });
-    }, function() {});
+    });
+    client.logger.waitForLogMessage(function(msg) {
+      return (msg.message.indexOf('foobar!') !== -1);
+    });
+
+    assert(gotMessage);
+
+    // - Now check that our synchronous grabLogMessages works too
+    gotMessage = false;
+
+    // make sure the message didn't get stuck in the system so that we keep
+    // seeing it over and over!
+    client.logger.grabLogMessages();
+    assert(!gotMessage);
+
+    // log it again...
+    client.executeScript(function() {
+      console.log('foobar!', { 'moo thing': true });
+    });
+    // and wait long enough for the Firefox 15ms batching to have definitely
+    // expired.
+    client.helper.wait(30);
+    client.logger.grabLogMessages();
+    assert(gotMessage);
+
+    // - Now check our timeout mechanism without us logging anything
+    // (Note that other things may cause logging to happen, so this may end up
+    // doing what our next case tries to do too.)
+
+    // Disable the default onScriptTimeout which likes to take a screenshot
+    // and spams stdout.
+    client.onScriptTimeout = null;
+
+    var clockStartedAt = Date.now();
+    assert.throws(function() {
+      client.logger.waitForLogMessage(function() {
+        // never match anything!
+        return false;
+      }, 100);
+    }, Error);
+    var clockStoppedAt = Date.now();
+    assert(clockStoppedAt > clockStartedAt + 95, 'correct duration');
+
+    // - Check our timeout with us logging a few things
+    clockStartedAt = Date.now();
+    assert.throws(function() {
+      client.executeScript(function() {
+        console.log('0ms');
+        window.setTimeout(function() {
+          console.log('20ms');
+        }, 20);
+        window.setTimeout(function() {
+          console.log('40ms');
+        }, 40);
+        window.setTimeout(function() {
+          console.log('60ms');
+        }, 60);
+        window.setTimeout(function() {
+          console.log('80ms');
+        }, 80);
+      });
+      client.logger.waitForLogMessage(function() {
+        // never match anything!
+        return false;
+      }, 100);
+    }, Error);
+    clockStoppedAt = Date.now();
+    assert(clockStoppedAt > clockStartedAt + 95, 'correct duration');
   });
 
-  test('going to a different url and logging', function(done) {
-    var msgNo = 0;
-    client.logger.handleMessage = function(msg) {
+  test('get logs from (nested) mozbrowser iframes', function() {
+    var unique = '____I_AM_SO_UNIQUE___';
+    var gotEmitted = false;
 
-      if (msgNo === 0 &&
-          msg.message === '____I_AM_SO_UNIQUE___' &&
-          msg.level === 'log') {
-        assert.ok(true, 'Got console.log');
-        msgNo++;
-      } else if (msgNo === 1 &&
-                 msg.message === '___I_AM_SO_BROKEN___' &&
-                 msg.level === 'error' &&
-                 msg.stack.length) {
-        assert.ok(true, 'Got console.error');
-        done();
+    // this gets emitted before our waitForLogMessage gets a chance
+    client.logger.on('message', function(msg) {
+      if (msg.message.indexOf(unique) !== -1) {
+        gotEmitted = true;
       }
-    };
+    });
 
-    client.goUrl(localUrl('blank.html'), function() {});
-    client.goUrl(localUrl('index.html'), function() {});
+    // Launch browser and navigate to index.html.
+    rocketbar.homescreenFocus();
+    rocketbar.enterText(localUrl('index.html') + '\uE006');
+
+    client.logger.waitForLogMessage(function(msg) {
+      return msg.message.indexOf(unique) !== -1;
+    });
+    assert(gotEmitted);
   });
 
-  test('Catches content errors', function(done) {
+  test('Catches content errors', function() {
+    var gotEmitted = false;
 
-    client.logger.handleMessage = function(msg) {
+    // this gets emitted before our waitForLogMessage gets a chance
+    client.logger.on('message', function(msg) {
       if (msg.message.indexOf('SyntaxError') !== -1 &&
           msg.filename.indexOf('error.html') !== -1) {
-        assert.ok(true, 'We got the syntax error');
-        done();
+        gotEmitted = true;
       }
-    };
+    });
 
-    client.goUrl(localUrl('error.html'), function() {});
+    // Launch browser and navigate to error.html.
+    rocketbar.homescreenFocus();
+    rocketbar.enterText(localUrl('error.html') + '\uE006');
+
+    client.logger.waitForLogMessage(function(msg) {
+      return msg.message.indexOf('SyntaxError') !== -1;
+    });
+    assert(gotEmitted);
   });
 });
