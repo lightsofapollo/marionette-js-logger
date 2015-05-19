@@ -1,4 +1,4 @@
-marionette-js-runner
+marionette-js-logger
 ====================
 
 [![You shall not pass](http://cdn.meme.am/instances/500x/62331333.jpg)](https://github.com/mozilla-b2g/gaia/tree/master/tests/jsmarionette)
